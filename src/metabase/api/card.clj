@@ -356,14 +356,16 @@
 
 (defn run-query-for-card
   "Run the query for Card with PARAMETERS and CONSTRAINTS, and return results in the usual format."
-  [card-id & {:keys [parameters constraints]
-              :or   {constraints dataset-api/default-query-constraints}}]
+  [card-id & {:keys [parameters constraints context]
+              :or   {constraints dataset-api/default-query-constraints
+                     context     :question}}]
   {:pre [(u/maybe? sequential? parameters)]}
   (let [card    (read-check Card card-id)
         query   (assoc (:dataset_query card)
                   :parameters  parameters
                   :constraints constraints)
         options {:executed-by *current-user-id*
+                 :context     context
                  :card-id     card-id}]
     (check-not-archived card)
     (qp/dataset-query query options)))

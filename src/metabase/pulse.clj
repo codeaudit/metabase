@@ -25,7 +25,7 @@
   (when-let [card (Card card-id)]
     (let [{:keys [creator_id dataset_query]} card]
       (try
-        {:card card :result (qp/dataset-query dataset_query {:executed-by creator_id})}
+        {:card card :result (qp/dataset-query dataset_query {:executed-by creator_id, :context :pulse})}
         (catch Throwable t
           (log/warn (format "Error running card query (%n)" card-id) t))))))
 

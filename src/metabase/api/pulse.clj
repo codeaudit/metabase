@@ -97,7 +97,7 @@
   "Get HTML rendering of a `Card` with ID."
   [id]
   (let [card   (read-check Card id)
-        result (qp/dataset-query (:dataset_query card) {:executed-by *current-user-id*})]
+        result (qp/dataset-query (:dataset_query card) {:executed-by *current-user-id*, :context :pulse})]
     {:status 200, :body (html [:html [:body {:style "margin: 0;"} (binding [render/*include-title* true
                                                                             render/*include-buttons* true]
                                                                     (render/render-pulse-card card result))]])}))
@@ -106,7 +106,7 @@
   "Get JSON object containing HTML rendering of a `Card` with ID and other information."
   [id]
   (let [card      (read-check Card id)
-        result    (qp/dataset-query (:dataset_query card) {:executed-by *current-user-id*})
+        result    (qp/dataset-query (:dataset_query card) {:executed-by *current-user-id*, :context :pulse})
         data      (:data result)
         card-type (render/detect-pulse-card-type card data)
         card-html (html (binding [render/*include-title* true]
@@ -120,7 +120,7 @@
   "Get PNG rendering of a `Card` with ID."
   [id]
   (let [card   (read-check Card id)
-        result (qp/dataset-query (:dataset_query card) {:executed-by *current-user-id*})
+        result (qp/dataset-query (:dataset_query card) {:executed-by *current-user-id*, :context :pulse})
         ba     (binding [render/*include-title* true]
                  (render/render-pulse-card-to-png card result))]
     {:status 200, :headers {"Content-Type" "image/png"}, :body (new java.io.ByteArrayInputStream ba)}))

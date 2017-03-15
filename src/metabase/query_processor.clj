@@ -1,9 +1,10 @@
 (ns metabase.query-processor
   "Preprocessor that does simple transformations to all incoming queries, simplifing the driver-specific implementations."
   (:require [clojure.tools.logging :as log]
+            [schema.core :as s]
             [toucan.db :as db]
             [metabase.driver :as driver]
-            [metabase.models.query-execution :refer [QueryExecution]]
+            [metabase.models.query-execution :refer [QueryExecution], :as query-execution]
             [metabase.query-processor.util :as qputil]
             (metabase.query-processor.middleware [add-implicit-clauses :as implicit-clauses]
                                                  [add-row-count-and-status :as row-count-and-status]
@@ -119,7 +120,7 @@
         (dissoc :start_time_millis)
         (merge updates)
         save-query-execution!
-        (dissoc :raw_query :result_rows :version)
+        (dissoc :result_rows)
         ;; this is just for the response for clien
         (assoc :error     error-message
                :row_count 0
@@ -140,7 +141,7 @@
       (dissoc :start_time_millis)
       save-query-execution!
       ;; at this point we've saved and we just need to massage things into our final response format
-      (dissoc :error :raw_query :result_rows :version)
+      (dissoc :error :result_rows)
       (merge query-result)))
 
 
@@ -161,21 +162,17 @@
 
 (defn- query-execution-info
   "Return the info for the `QueryExecution` entry for this QUERY."
-  [{{:keys [uuid executed-by query-hash]} :info, :as query}]
+  [{{:keys [uuid executed-by query-hash context]} :info, :as query}]
   {:uuid              (or uuid (throw (Exception. "Missing query UUID!")))
    :executor_id       executed-by
+   :context           context
    :json_query        (dissoc query :info)
    :query_hash        (or query-hash (throw (Exception. "Missing query hash!")))
-   :version           0
    :error             ""
    :started_at        (u/new-sql-timestamp)
    :finished_at       (u/new-sql-timestamp)
    :running_time      0
    :result_rows       0
-   :result_file       ""
-   :result_data       "{}"
-   :raw_query         ""
-   :additional_info   ""
    :start_time_millis (System/currentTimeMillis)})
 
 (defn- run-and-save-query!
@@ -206,13 +203,15 @@
     :executed-by [int]  (User ID of caller)
     :card-id     [int]  (ID of Card associated with this execution)"
   {:arglists '([query options])}
-  [query {:keys [executed-by card-id]}]
+  [query {:keys [executed-by card-id context]}]
   {:pre [(or (integer? executed-by)
              *allow-queries-with-no-executor-id*)
-         (u/maybe? integer? card-id)]}
+         (u/maybe? integer? card-id)
+         (s/validate query-execution/Context context)]}
   (let [query-uuid (str (java.util.UUID/randomUUID))
         query-hash (hash query)
         query      (assoc query :info {:executed-by executed-by
+                                       :context     context
                                        :card-id     card-id
                                        :uuid        query-uuid
                                        :query-hash  query-hash

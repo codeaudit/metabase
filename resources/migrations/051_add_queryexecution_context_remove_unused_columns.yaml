@@ -1,0 +1,27 @@
+databaseChangeLog:
+  - changeSet:
+      id: 51
+      author: camsaul
+      changes:
+        - dropColumn:
+            tableName: query_queryexecution
+            columnName: version
+        - dropColumn:
+            tableName: query_queryexecution
+            columnName: result_file
+        - dropColumn:
+            tableName: query_queryexecution
+            columnName: result_data
+        - dropColumn:
+            tableName: query_queryexecution
+            columnName: raw_query
+        - dropColumn:
+            tableName: query_queryexecution
+            columnName: additional_info
+        - addColumn:
+            tableName: query_queryexecution
+            columns:
+              - column:
+                  name: context
+                  type: varchar(32)
+                  remarks: 'How this query was executed, e.g. in a Dashboard or Pulse'

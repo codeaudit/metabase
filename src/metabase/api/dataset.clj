@@ -27,12 +27,12 @@
    :max-results-bare-rows max-results-bare-rows})
 
 (defendpoint POST "/"
-  "Execute an MQL query and retrieve the results as JSON."
+  "Execute a query and retrieve the results in the usual format."
   [:as {{:keys [database] :as body} :body}]
   (read-check Database database)
   ;; add sensible constraints for results limits on our query
   (let [query (assoc body :constraints default-query-constraints)]
-    (qp/dataset-query query {:executed-by *current-user-id*})))
+    (qp/dataset-query query {:executed-by *current-user-id*, :context :ad-hoc})))
 
 (defendpoint POST "/duration"
   "Get historical query execution duration."
@@ -85,7 +85,7 @@
   {query su/JSONString}
   (let [query (json/parse-string query keyword)]
     (read-check Database (:database query))
-    (as-csv (qp/dataset-query (dissoc query :constraints) {:executed-by *current-user-id*}))))
+    (as-csv (qp/dataset-query (dissoc query :constraints) {:executed-by *current-user-id*, :context :csv-download}))))
 
 (defendpoint POST "/json"
   "Execute a query and download the result data as a JSON file."
@@ -93,7 +93,7 @@
   {query su/JSONString}
   (let [query (json/parse-string query keyword)]
     (read-check Database (:database query))
-    (as-json (qp/dataset-query (dissoc query :constraints) {:executed-by *current-user-id*}))))
+    (as-json (qp/dataset-query (dissoc query :constraints) {:executed-by *current-user-id*, :context :json-download}))))
 
 
 (define-routes)

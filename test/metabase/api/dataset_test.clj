@@ -58,6 +58,7 @@
                    :native_form true}
     :row_count    1
     :status       "completed"
+    :context      "ad-hoc"
     :id           true
     :uuid         true
     :json_query   (-> (wrap-inner-query
@@ -72,10 +73,10 @@
    {:row_count    1
     :result_rows  1
     :status       :completed
+    :context      :ad-hoc
     :error        ""
     :id           true
     :uuid         true
-    :raw_query    ""
     :json_query   (-> (wrap-inner-query
                         (query checkins
                                (ql/aggregation (ql/count))))
@@ -84,8 +85,7 @@
                       (assoc :constraints default-query-constraints))
     :started_at   true
     :finished_at  true
-    :running_time true
-    :version      0}]
+    :running_time true}]
   (let [result ((user->client :rasta) :post 200 "dataset" (wrap-inner-query
                                                             (query checkins
                                                                    (ql/aggregation (ql/count)))))]
@@ -102,6 +102,7 @@
                                :cols    []}
                 :row_count    0
                 :status       "failed"
+                :context      "ad-hoc"
                 :error        true
                 :id           true
                 :uuid         true
@@ -116,8 +117,7 @@
      (-> output
          (dissoc :data)
          (assoc :status      :failed
-                :version     0
-                :raw_query   ""
+                :context     :ad-hoc
                 :result_rows 0))])
   ;; Error message's format can differ a bit depending on DB version and the comment we prepend to it, so check that it exists and contains the substring "Syntax error in SQL statement"
   (let [check-error-message (fn [output]
