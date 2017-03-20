@@ -9,8 +9,9 @@
             (metabase.models [card :refer [Card]]
                              [database :refer [Database]]
                              [query-execution :refer [QueryExecution]])
-            (metabase [query-processor :as qp]
-                      [util :as u])
+            [metabase.query-processor :as qp]
+            [metabase.query-processor.util :as qputil]
+            [metabase.util :as util]
             [metabase.util.schema :as su]))
 
 (def ^:private ^:const max-results-bare-rows
@@ -36,18 +37,13 @@
 
 (defendpoint POST "/duration"
   "Get historical query execution duration."
-  [:as {{:keys [database] :as query} :body}]
+  [:as {{:keys [database], :as query} :body}]
   (read-check Database database)
-  ;; add sensible constraints for results limits on our query
-  (let [query         (assoc query :constraints default-query-constraints)
-        running-times (db/select-field :running_time QueryExecution
-                        :query_hash (hash query)
-                        {:order-by [[:started_at :desc]]
-                         :limit    10})]
-    {:average (if (empty? running-times)
-                0
-                (float (/ (reduce + running-times)
-                          (count running-times))))}))
+  ;; try calculating the average for the query as it was given to us, otherwise with the default constraints if there's no data there.
+  ;; if we still can't find relevant info, just default to 0
+  {:average (or (qputil/query-average-duration query)
+                (qputil/query-average-duration (assoc query :constraints default-query-constraints))
+                0)})
 
 (defn as-csv
   "Return a CSV response containing the RESULTS of a query."

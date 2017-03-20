@@ -17,55 +17,55 @@
                                                                      :page        1}}))
 
 
-;;; ------------------------------------------------------------ Tests for qputil/secure-query-hash ------------------------------------------------------------
+;;; ------------------------------------------------------------ Tests for qputil/query-hash ------------------------------------------------------------
 
 (defn- array= {:style/indent 0} [a b]
   (java.util.Arrays/equals a b))
 
-;; qputil/secure-query-hash should always hash something the same way, every time
+;; qputil/query-hash should always hash something the same way, every time
 (expect
   (array=
     (byte-array [41, 6, -19, -29, -19, 124, -91, -26, -107, -120, -120, -32, -117, 102, -65, -122, -37, -38, 111, 19, -12, 100, -54, -119, 59, 86, -57, -96, 63, -57, -81, -96])
-    (qputil/secure-query-hash {:query :abc})))
+    (qputil/query-hash {:query :abc})))
 
 (expect
   (array=
-    (qputil/secure-query-hash {:query :def})
-    (qputil/secure-query-hash {:query :def})))
+    (qputil/query-hash {:query :def})
+    (qputil/query-hash {:query :def})))
 
 ;; different queries should produce different hashes
 (expect
   false
   (array=
-    (qputil/secure-query-hash {:query :abc})
-    (qputil/secure-query-hash {:query :def})))
+    (qputil/query-hash {:query :abc})
+    (qputil/query-hash {:query :def})))
 
 (expect
   false
   (array=
-    (qputil/secure-query-hash {:query :abc, :database 1})
-    (qputil/secure-query-hash {:query :abc, :database 2})))
+    (qputil/query-hash {:query :abc, :database 1})
+    (qputil/query-hash {:query :abc, :database 2})))
 
 (expect
   false
   (array=
-    (qputil/secure-query-hash {:query :abc, :type "query"})
-    (qputil/secure-query-hash {:query :abc, :type "native"})))
+    (qputil/query-hash {:query :abc, :type "query"})
+    (qputil/query-hash {:query :abc, :type "native"})))
 
 (expect
   false
   (array=
-    (qputil/secure-query-hash {:query :abc, :parameters [1]})
-    (qputil/secure-query-hash {:query :abc, :parameters [2]})))
+    (qputil/query-hash {:query :abc, :parameters [1]})
+    (qputil/query-hash {:query :abc, :parameters [2]})))
 
 (expect
   false
   (array=
-    (qputil/secure-query-hash {:query :abc, :constraints {:max-rows 1000}})
-    (qputil/secure-query-hash {:query :abc, :constraints nil})))
+    (qputil/query-hash {:query :abc, :constraints {:max-rows 1000}})
+    (qputil/query-hash {:query :abc, :constraints nil})))
 
-;; ... but keys that are irrelevant to the query should be ignored by qputil/secure-query-hash
+;; ... but keys that are irrelevant to the query should be ignored by qputil/query-hash
 (expect
   (array=
-    (qputil/secure-query-hash {:query :abc, :random :def})
-    (qputil/secure-query-hash {:query :abc, :random :xyz})))
+    (qputil/query-hash {:query :abc, :random :def})
+    (qputil/query-hash {:query :abc, :random :xyz})))

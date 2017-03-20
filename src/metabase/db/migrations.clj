@@ -349,7 +349,7 @@
   "Convert a LegacyQueryExecution to a format suitable for insertion as a new-format QueryExecution."
   [{query :json_query, :as query-execution}]
   (-> (assoc query-execution
-        :hash   (qputil/secure-query-hash query)
+        :hash   (qputil/query-hash query)
         :native (not (qputil/mbql-query? query)))
       ;; since error is nullable now remove the old blank error message strings
       (update :error (fn [error-message]

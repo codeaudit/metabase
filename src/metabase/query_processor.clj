@@ -111,30 +111,25 @@
 (defn- save-and-return-failed-query!
   "Save QueryExecution state and construct a failed query response"
   [query-execution error-message]
-  (let [updates {:status       :failed
-                 :error        error-message
-                 :finished_at  (u/new-sql-timestamp)
-                 :running_time (- (System/currentTimeMillis) (:start_time_millis query-execution))}]
-    ;; record our query execution and format response
-    (-> query-execution
-        (dissoc :start_time_millis)
-        (merge updates)
-        save-query-execution!
-        (dissoc :result_rows)
-        ;; this is just for the response for clien
-        (assoc :error     error-message
-               :row_count 0
-               :data      {:rows    []
-                           :cols    []
-                           :columns []}))))
+  ;; record our query execution and format response
+  (-> query-execution
+      (dissoc :start_time_millis)
+      (merge {:error        error-message
+              :running_time (- (System/currentTimeMillis) (:start_time_millis query-execution))})
+      save-query-execution!
+      (dissoc :result_rows)
+      ;; this is just for the response for client
+      (assoc :error     error-message
+             :row_count 0
+             :data      {:rows    []
+                         :cols    []
+                         :columns []})))
 
 (defn- save-and-return-successful-query!
   "Save QueryExecution state and construct a completed (successful) query response"
   [query-execution query-result]
   ;; record our query execution and format response
   (-> (assoc query-execution
-        :status       :completed
-        :finished_at  (u/new-sql-timestamp)
         :running_time (- (System/currentTimeMillis)
                          (:start_time_millis query-execution))
         :result_rows  (get query-result :row_count 0))
@@ -162,15 +157,12 @@
 
 (defn- query-execution-info
   "Return the info for the `QueryExecution` entry for this QUERY."
-  [{{:keys [uuid executed-by query-hash context]} :info, :as query}]
-  {:uuid              (or uuid (throw (Exception. "Missing query UUID!")))
-   :executor_id       executed-by
+  [{{:keys [executed-by query-hash context]} :info, :as query}]
+  {:executor_id       executed-by
    :context           context
-   :json_query        (dissoc query :info)
    :query_hash        (or query-hash (throw (Exception. "Missing query hash!")))
    :error             ""
    :started_at        (u/new-sql-timestamp)
-   :finished_at       (u/new-sql-timestamp)
    :running_time      0
    :result_rows       0
    :start_time_millis (System/currentTimeMillis)})
@@ -208,12 +200,8 @@
              *allow-queries-with-no-executor-id*)
          (u/maybe? integer? card-id)
          (s/validate query-execution/Context context)]}
-  (let [query-uuid (str (java.util.UUID/randomUUID))
-        query-hash (hash query)
-        query      (assoc query :info {:executed-by executed-by
-                                       :context     context
-                                       :card-id     card-id
-                                       :uuid        query-uuid
-                                       :query-hash  query-hash
-                                       :query-type  (if (qputil/mbql-query? query) "MBQL" "native")})]
-    (run-and-save-query! query)))
+  (run-and-save-query! (assoc query :info {:executed-by executed-by
+                                           :context     context
+                                           :card-id     card-id
+                                           :query-hash  (qputil/query-hash query)
+                                           :query-type  (if (qputil/mbql-query? query) "MBQL" "native")})))
