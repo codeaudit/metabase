@@ -11,7 +11,7 @@
                              [query-execution :refer [QueryExecution]])
             [metabase.query-processor :as qp]
             [metabase.query-processor.util :as qputil]
-            [metabase.util :as util]
+            [metabase.util :as u]
             [metabase.util.schema :as su]))
 
 (def ^:private ^:const max-results-bare-rows

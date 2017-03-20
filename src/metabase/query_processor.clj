@@ -160,7 +160,7 @@
   [{{:keys [executed-by query-hash context]} :info, :as query}]
   {:executor_id       executed-by
    :context           context
-   :query_hash        (or query-hash (throw (Exception. "Missing query hash!")))
+   :hash              (or query-hash (throw (Exception. "Missing query hash!")))
    :error             ""
    :started_at        (u/new-sql-timestamp)
    :running_time      0
