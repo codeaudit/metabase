@@ -120,7 +120,7 @@ function getDateTimeFieldTarget(field: ConcreteField): LocalFieldReference|Forei
 }
 
 function getDateTimeFieldAndValues(filter: FieldFilter): [ConcreteField, any] {
-    const values = filter.slice(2).map(getDate);
+    const values = filter.slice(2).map(value => value && getDate(value));
     const bucketing = _.any(values, hasTime) ? "minute" : null;
     const field = getDateTimeField(filter[1], bucketing);
     // $FlowFixMe
